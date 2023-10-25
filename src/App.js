@@ -35,10 +35,15 @@ function App() {
         <form>
           <input type='text' placeholder='Create a name...'></input>
           <input type='text' placeholder='Give a description..'></input>
-          <input type='submit'></input>
+          <input type='submit' value="Create and Mint"></input>
         </form>
 
+      <div className='image'>
+        <img src='' alt='AI generated image'></img>
       </div>
+
+      </div>
+      <p>View&nbsp;<a href='' target='_blank' rel='noreferrer'>Metadata</a></p>
     </div>
   );
 }
