@@ -21,6 +21,8 @@ function App() {
   const [name,setName] = useState("")
   const [description,setDescription] = useState("")
 
+  const [image,setImage] = useState(null)
+
   const loadBlockchainData = async () => {
     const provider = new ethers.providers.Web3Provider(window.ethereum)
     setProvider(provider)
@@ -29,7 +31,47 @@ function App() {
   const submitHandler = async(e) => {
     e.preventDefault();
 
-    console.log("Submitting...",name,description);
+    //Calling AI Api to generate an image based on description
+    const imageData = createImage();
+  }
+
+  const createImage = async() =>{
+    console.log("Generating Image");
+
+    // You can replace this with different model API's
+    const URL = `https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1`;
+
+    // Send the request
+    const response = await axios({
+      url: URL,
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${process.env.REACT_APP_HUGGING_FACE_API_KEY}`,
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      data: JSON.stringify({
+        inputs: description, options: { wait_for_model: true },
+      }),
+      responseType: 'arraybuffer',
+    });
+
+    console.log("Response Status:", response.status);
+
+  if (response.status === 200) {
+    const type = response.headers['content-type'];
+    const data = response.data;
+
+    const base64data = Buffer.from(data).toString('base64');
+    const img = `data:${type};base64,` + base64data; // <-- This is so we can render it on the page
+    setImage(img);
+
+    return data;
+  } else {
+    console.error("API Request Failed");
+    console.error(response.data);
+    // Handle the error appropriately
+  }
   }
 
   useEffect(() => {
@@ -48,7 +90,7 @@ function App() {
         </form>
 
       <div className='image'>
-        <img src='' alt='AI generated image'></img>
+        <img src={image} alt='AI generated image'></img>
       </div>
 
       </div>
