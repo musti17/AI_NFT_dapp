@@ -17,7 +17,7 @@ import config from './config.json';
 function App() {
   const [provider, setProvider] = useState(null)
   const [account, setAccount] = useState(null)
-
+  const [nft,setNft] = useState(null)
   const [name,setName] = useState("")
   const [description,setDescription] = useState("")
   const [image,setImage] = useState(null)
@@ -26,6 +26,16 @@ function App() {
   const loadBlockchainData = async () => {
     const provider = new ethers.providers.Web3Provider(window.ethereum)
     setProvider(provider)
+
+    const network = await provider.getNetwork()
+
+    //ethers.Contract(address, abi , provider)
+    const nft = new ethers.Contract(config[network.chainId].nft.address, NFT, provider)
+    setNft(nft)
+
+    const name = await nft.name()
+    console.log("name:",name)
+    
   }
 
   const submitHandler = async(e) => {
@@ -37,7 +47,9 @@ function App() {
     //Upload image to IPFS(NFT.Storage)
     const url = await uploadImage(imageData);
 
-    console.log("url:",url);
+    await mintImage(url)
+
+    console.log("Flow successful")
   }
 
   const createImage = async() =>{
@@ -96,6 +108,14 @@ function App() {
 
     return url;
   }
+
+  const mintImage = async(tokenURI) =>{
+    console.log("Minting NFT..")
+
+    const signer = await provider.getSigner()
+    const transaction = await nft.connect(signer).mint(tokenURI, { value: ethers.utils.parseUnits("1", "ether") })
+    await transaction.wait()
+}
 
   useEffect(() => {
     loadBlockchainData()
