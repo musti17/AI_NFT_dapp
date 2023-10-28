@@ -41,6 +41,11 @@ function App() {
   const submitHandler = async(e) => {
     e.preventDefault();
 
+    if(name === "" || description === ""){
+      window.alert("Please provide a name and description")
+      return
+    }
+
     //Calling AI Api to generate an image based on description
     const imageData = createImage();
 
