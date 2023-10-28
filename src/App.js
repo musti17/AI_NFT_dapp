@@ -17,11 +17,13 @@ import config from './config.json';
 function App() {
   const [provider, setProvider] = useState(null)
   const [account, setAccount] = useState(null)
-  const [nft,setNft] = useState(null)
+  const [nft,setNft] = useState(null)//for contract setting
   const [name,setName] = useState("")
   const [description,setDescription] = useState("")
   const [image,setImage] = useState(null)
   const [url,setUrl] = useState(null);
+  const [isWaiting,setIsWaiting] = useState(false);
+  const [message,setMessage] = useState("");
 
   const loadBlockchainData = async () => {
     const provider = new ethers.providers.Web3Provider(window.ethereum)
@@ -32,9 +34,6 @@ function App() {
     //ethers.Contract(address, abi , provider)
     const nft = new ethers.Contract(config[network.chainId].nft.address, NFT, provider)
     setNft(nft)
-
-    const name = await nft.name()
-    console.log("name:",name)
     
   }
 
@@ -46,6 +45,7 @@ function App() {
       return
     }
 
+    setIsWaiting(true);
     //Calling AI Api to generate an image based on description
     const imageData = createImage();
 
@@ -54,11 +54,11 @@ function App() {
 
     await mintImage(url)
 
-    console.log("Flow successful")
+    setIsWaiting(false)
   }
 
   const createImage = async() =>{
-    console.log("Generating Image");
+    setMessage("Generating Image");
 
     // You can replace this with different model API's
     const URL = `https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2-1`;
@@ -95,7 +95,7 @@ function App() {
   }
 
   const uploadImage = async(imageData) =>{
-    console.log("Uploading image");
+    setMessage("Uploading image");
 
     //Create instance to NFTStorage
     const nftstorage = new NFTStorage({token:process.env.REACT_APP_NFT_STORAGE_API_KEY});
@@ -115,7 +115,7 @@ function App() {
   }
 
   const mintImage = async(tokenURI) =>{
-    console.log("Minting NFT..")
+   setMessage("Minting NFT..")
 
     const signer = await provider.getSigner()
     const transaction = await nft.connect(signer).mint(tokenURI, { value: ethers.utils.parseUnits("1", "ether") })
@@ -138,12 +138,24 @@ function App() {
         </form>
 
       <div className='image'>
-        <img src={image} alt='AI generated image'></img>
+        { !isWaiting && image ? (
+          <img src={image} alt='AI generated image' />
+        ) : isWaiting ? (
+          <div className='image__placeholder'>
+            <Spinner animation='border' />
+            <p>{message}</p>
+          </div>
+        ): (
+          <></>
+        )}
       </div>
 
       </div>
+
+      {!isWaiting && url && (
       <p>View&nbsp;<a href={url} target='_blank' rel='noreferrer'>Metadata</a></p>
-    </div>
+      )}
+      </div>
   );
 }
 
